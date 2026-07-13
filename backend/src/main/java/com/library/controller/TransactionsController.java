@@ -5,17 +5,14 @@ import com.library.dto.LendRequestDTO;
 import com.library.dto.TransactionResponseDTO;
 import com.library.model.Transactions;
 import com.library.service.TransactionsService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 	@RestController
 	@RequestMapping("/api/transactions")
-	@RequiredArgsConstructor
 	public class TransactionsController {
 
 	    private final TransactionsService transactionsService;

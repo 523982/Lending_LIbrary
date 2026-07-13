@@ -1,27 +1,25 @@
 # ============================================================
-# Copy this file to "application.properties" and fill in your
-# own local values. application.properties is gitignored and
-# will NEVER be committed to the repo.
+# Runtime configuration example.
+# Prefer setting these as environment variables in Render/Vercel/
+# local terminal instead of committing secrets to this file.
 # ============================================================
 
-# --- Option A: PostgreSQL (recommended for production/cloud) ---
-spring.datasource.url=jdbc:postgresql://localhost:5432/lending_library_db
-spring.datasource.username=postgres
-spring.datasource.password=CHANGE_ME
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+# --- Supabase PostgreSQL ---
+# Copy the JDBC connection string from Supabase Project Settings > Database.
+# Example direct connection shape:
+# SPRING_DATASOURCE_URL=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require
+# SPRING_DATASOURCE_USERNAME=postgres
+# SPRING_DATASOURCE_PASSWORD=CHANGE_ME
+# SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+# SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+# SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+# H2_CONSOLE_ENABLED=false
 
-# --- Option B: H2 file-based DB (good for local dev) ---
-# Comment out the PostgreSQL lines above and uncomment these instead.
-# Uses a relative path so it works on any machine, not tied to one user's folder.
-#spring.datasource.url=jdbc:h2:file:./data/db
-#spring.datasource.driverClassName=org.h2.Driver
-#spring.datasource.username=admindb
-#spring.datasource.password=CHANGE_ME
-#spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-#spring.h2.console.enabled=true
-
-# --- Spring JPA (common settings) ---
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.enable_lazy_load_no_trans=true
-spring.jpa.properties.hibernate.format_sql=true
+# --- Local H2 fallback used by application.properties when env vars are absent ---
+# SPRING_DATASOURCE_URL=jdbc:h2:file:./data/db
+# SPRING_DATASOURCE_USERNAME=admindb
+# SPRING_DATASOURCE_PASSWORD=admindb
+# SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+# SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
+# SPRING_JPA_HIBERNATE_DDL_AUTO=update
+# H2_CONSOLE_ENABLED=true

@@ -3,13 +3,11 @@ package com.library.service;
 import java.util.ArrayList;
 import java.util.List;
 import com.library.dto.CustomerRequestDTO;
-import java.util.Optional;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.library.exception.ResourceNotFoundException;
-import com.library.model.Books;
 import com.library.model.Communities;
 import com.library.model.Customers;
 import com.library.repository.CommunitiesRepository;
@@ -17,10 +15,8 @@ import com.library.repository.CustomersRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor // Creates a constructor with all final fields
 public class CustomerService {
 
     private final CustomersRepository customersRepository;
@@ -35,17 +31,15 @@ public class CustomerService {
         return customersRepository.findAll();
     }
 
-    public Customers getCustomerById(Long customerId) {
+    public Customers getCustomerById(String customerId) {
         return customersRepository.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
     }
     
     private String createCustomerId(CustomerRequestDTO request) {
-    	String newCustId;
-    	Integer maxCustId=customersRepository.findMaxCustomerId() + 1;
-    	if (maxCustId.toString().length()!=3){
-    	newCustId= request.getCommunityId()+"0"+request.getUnitNumber()+"0"+maxCustId;
-    	} else
-    	newCustId= request.getCommunityId()+"0"+request.getUnitNumber()+maxCustId;	
+    	Integer maxCustId = customersRepository.findMaxCustomerId();
+    	int nextCustomerId = maxCustId == null ? 1 : maxCustId + 1;
+    	String sequence = String.format("%03d", nextCustomerId);
+    	String newCustId = request.getCommunityId() + "0" + request.getUnitNumber() + sequence;
     	System.out.println("new custid "+ newCustId);
     	return newCustId;
     }
@@ -72,12 +66,12 @@ public class CustomerService {
     	return customersRepository.count();
     }
 
-    public Customers updateCustomer(Long customerId, Customers customerDetails) {
+    public Customers updateCustomer(String customerId, Customers customerDetails) {
         Customers customer = getCustomerById(customerId); // Re-uses the findById logic
         return customersRepository.save(customer);
     }
 
-    public void deleteCustomer(Long customerId) {
+    public void deleteCustomer(String customerId) {
     	if (!customersRepository.existsById(customerId)) {
 	        throw new EntityNotFoundException("Customer not found with id: " + customerId);
 	    }    

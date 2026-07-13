@@ -1,7 +1,6 @@
 package com.library.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,16 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.library.dto.CustomerRequestDTO;
-import com.library.model.Books;
 import com.library.model.Customers;
 import com.library.service.CustomerService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/customers")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000") // Allows your React app to call the API
 public class CustomersController {
 
@@ -48,7 +44,7 @@ public class CustomersController {
 
     // Get a single customer by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Customers> getCustomerById(@PathVariable(value = "id") Long customerId) {
+    public ResponseEntity<Customers> getCustomerById(@PathVariable(value = "id") String customerId) {
         Customers customer = customerService.getCustomerById(customerId);
         return ResponseEntity.ok().body(customer);
     }
@@ -61,7 +57,7 @@ public class CustomersController {
 
     // Update a customer
     @PutMapping("/{id}")
-    public ResponseEntity<Customers> updateCustomer(@PathVariable(value = "id") Long customerId,
+    public ResponseEntity<Customers> updateCustomer(@PathVariable(value = "id") String customerId,
                                                    @Valid @RequestBody Customers customerDetails) {
         final Customers updatedCustomer = customerService.updateCustomer(customerId, customerDetails);
         return ResponseEntity.ok(updatedCustomer);
@@ -69,7 +65,7 @@ public class CustomersController {
 
     // Delete a customer
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable(value = "id") Long customerId) {
+    public ResponseEntity<Void> deleteCustomer(@PathVariable(value = "id") String customerId) {
         customerService.deleteCustomer(customerId);
         return ResponseEntity.ok().build();
     }

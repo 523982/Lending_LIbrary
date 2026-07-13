@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 @Data
 public class LendRequestDTO {
     private Long bookId;
-    private Long customerId;
+    private String customerId;
     private BigDecimal totalAmount;
     private boolean isSwap;
     private boolean isPartiallyPaid;
@@ -18,10 +18,10 @@ public class LendRequestDTO {
 	public void setBookId(Long bookId) {
 		this.bookId = bookId;
 	}
-	public Long getCustomerId() {
+	public String getCustomerId() {
 		return customerId;
 	}
-	public void setCustomerId(Long customerId) {
+	public void setCustomerId(String customerId) {
 		this.customerId = customerId;
 	}
 	public BigDecimal getTotalAmount() {

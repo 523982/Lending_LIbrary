@@ -2,6 +2,7 @@ package com.library.service;
 
 import com.library.dto.LendRequestDTO;
 import com.library.dto.TransactionResponseDTO;
+import com.library.enums.BookStatusEnum;
 import com.library.exception.ResourceNotFoundException;
 import com.library.model.BookStatus;
 import com.library.model.Books;
@@ -11,7 +12,6 @@ import com.library.repository.BooksRepository;
 import com.library.repository.BooksStatusRepository;
 import com.library.repository.CustomersRepository;
 import com.library.repository.TransactionsRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class TransactionsService {
 
 	public TransactionsService(TransactionsRepository transactionsRepository, BooksRepository booksRepository,
@@ -61,9 +60,10 @@ public class TransactionsService {
 	public Transactions lendBook(LendRequestDTO lendRequest) {
 		Books book = booksRepository.findById(lendRequest.getBookId())
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + lendRequest.getBookId()));
-	    List<BookStatus> bookStatus= booksStatusRepository.findAll();
+	    BookStatus availableStatus = getOrCreateBookStatus(1L, BookStatusEnum.AVAILABLE);
+	    BookStatus unavailableStatus = getOrCreateBookStatus(2L, BookStatusEnum.UNAVAILABLE);
 
-		if (book.getBookStatus()!=bookStatus.get(0)) {
+		if (book.getBookStatus() == null || !availableStatus.getStatusId().equals(book.getBookStatus().getStatusId())) {
 			throw new IllegalStateException("Book is not available for lending.");
 		}
 
@@ -77,7 +77,7 @@ public class TransactionsService {
 		}
 
 		// Update book status
-		book.setBookStatus(bookStatus.get(1));
+		book.setBookStatus(unavailableStatus);
 		booksRepository.save(book);
 
 		// Create and save the transaction
@@ -104,7 +104,7 @@ public class TransactionsService {
 	public TransactionResponseDTO returnBook(Long bookId) {
 		// public TransactionResponseDTO returnBook(String transactionId) {
 		// Transactions transactions = transactionsRepository.findById(transactionId)
-		List<BookStatus> bookStatus= booksStatusRepository.findAll();
+		BookStatus availableStatus = getOrCreateBookStatus(1L, BookStatusEnum.AVAILABLE);
 		String txnId = transactionsRepository.findTxnId(bookId).orElseThrow(
 				() -> new ResourceNotFoundException("Book not found or is already lent with id: " + bookId));
 		Transactions transactions = transactionsRepository.findById(txnId)
@@ -117,12 +117,21 @@ public class TransactionsService {
 		transactions.setReturnDate(LocalDate.now());
 
 		Books books = transactions.getBooks();
-		books.setBookStatus(bookStatus.get(0));
+		books.setBookStatus(availableStatus);
 		booksRepository.save(books);
 
 		Transactions savedTransaction = transactionsRepository.save(transactions);
 		return convertToDto(savedTransaction);
 
+	}
+
+	private BookStatus getOrCreateBookStatus(Long statusId, BookStatusEnum statusDesc) {
+		return booksStatusRepository.findById(statusId).orElseGet(() -> {
+			BookStatus status = new BookStatus();
+			status.setStatusId(statusId);
+			status.setStatusDesc(statusDesc);
+			return booksStatusRepository.save(status);
+		});
 	}
 
     private TransactionResponseDTO convertToDto(Transactions transaction) {

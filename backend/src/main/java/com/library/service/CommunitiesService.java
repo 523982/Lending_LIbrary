@@ -2,22 +2,16 @@ package com.library.service;
 
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
 import com.library.dto.CommunityDTO;
 import com.library.exception.ResourceNotFoundException;
 import com.library.model.Communities;
 import com.library.repository.CommunitiesRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor // Creates a constructor with all final fields
 public class CommunitiesService {
 	
 
@@ -40,7 +34,7 @@ public class CommunitiesService {
     
     public Communities createCommunity(CommunityDTO request) {
     	Communities community=new Communities();
-    	community.setCommunityId(communitiesRepository.findMaxCommunitiesId()+1);
+    	community.setCommunityId(getNextCommunityId());
     	community.setCommunityName(request.getCommunityName());
     	return communitiesRepository.save(community);
     }
@@ -52,7 +46,12 @@ public class CommunitiesService {
 	}
 	
 	public Long getTotalCommunities() {
-		return communitiesRepository.findMaxCommunitiesId();
+		return communitiesRepository.count();
+	}
+
+	private Long getNextCommunityId() {
+		Long maxCommunityId = communitiesRepository.findMaxCommunitiesId();
+		return maxCommunityId == null ? 1L : maxCommunityId + 1;
 	}
 
 

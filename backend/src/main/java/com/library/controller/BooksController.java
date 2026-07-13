@@ -20,15 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.library.dto.BookCountStatsDTO;
 import com.library.dto.BooksDTO;
 import com.library.model.Books;
-import com.library.model.Customers;
 import com.library.service.BooksService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/books")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000")
 public class BooksController {
 

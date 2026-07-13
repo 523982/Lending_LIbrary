@@ -18,10 +18,8 @@ import com.library.repository.BooksStatusRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class BooksService {
 	
 	    private final BooksRepository booksRepository;
@@ -57,8 +55,8 @@ public class BooksService {
 		
 		@Transactional
 	    public BooksDTO addBooks(Books books) {
-		    BookStatus bookStatus= booksStatusRepository.getReferenceById(1L);
-	    	books.setBookId(booksRepository.findMaxBookId()+1);
+		    BookStatus bookStatus= getOrCreateBookStatus(1L, BookStatusEnum.AVAILABLE);
+	    	books.setBookId(getNextBookId());
 	    	books.setBookStatus(bookStatus);
 	        Books savedBook= booksRepository.save(books);
 	        return convertToDto(savedBook);
@@ -81,7 +79,7 @@ public class BooksService {
 	        Books existingBook = booksRepository.findById(bookId)
 	                .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));
 	        
-		    BookStatus bookStatus= booksStatusRepository.getReferenceById(1L);
+		    BookStatus bookStatus= getOrCreateBookStatus(1L, BookStatusEnum.AVAILABLE);
 
 	        // Update fields from the payload
 	        existingBook.setBookName(bookDetails.getBookName());
@@ -108,9 +106,23 @@ public class BooksService {
 	    	 Books book= booksRepository.findById(bookId)
 	    			 .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + bookId));; 
 	    	 //BooksDTO request= convertToDto(getBooksById(bookId));
-	    	 BookStatus status= booksStatusRepository.getReferenceById(6L);
+	    	 BookStatus status= getOrCreateBookStatus(6L, BookStatusEnum.OBSOLETE);
 	    	 book.setBookStatus(status);
 	    	return convertToDto(booksRepository.save(book));
+	    }
+
+	    private Long getNextBookId() {
+	    	Long maxBookId = booksRepository.findMaxBookId();
+	    	return maxBookId == null ? 1L : maxBookId + 1;
+	    }
+
+	    private BookStatus getOrCreateBookStatus(Long statusId, BookStatusEnum statusDesc) {
+	    	return booksStatusRepository.findById(statusId).orElseGet(() -> {
+	    		BookStatus status = new BookStatus();
+	    		status.setStatusId(statusId);
+	    		status.setStatusDesc(statusDesc);
+	    		return booksStatusRepository.save(status);
+	    	});
 	    }
 
 	    

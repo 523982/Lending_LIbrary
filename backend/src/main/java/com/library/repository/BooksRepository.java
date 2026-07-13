@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.library.model.Books;
@@ -20,8 +21,8 @@ public interface BooksRepository extends JpaRepository<Books, Long> {
 	@Query(value = "SELECT count(*) FROM INVENTORY WHERE status_id = 2", nativeQuery = true)
     long countUnavailableBooks();
 	
-	@Query(value = "SELECT * FROM INVENTORY WHERE status_id = 2", nativeQuery = true)
-    List<Books> lentBooks(String query);	
+	@Query(value = "SELECT * FROM INVENTORY WHERE status_id = 2 AND LOWER(book_name) LIKE LOWER(CONCAT('%', :query, '%'))", nativeQuery = true)
+    List<Books> lentBooks(@Param("query") String query);	
 	
 	List<Books> findByBookNameContainingIgnoreCase(String query);
 }
