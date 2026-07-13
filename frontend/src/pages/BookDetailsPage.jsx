@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom'; // We'll need react-router-dom for this
 import apiClient from '../services/api';
+import { findSourceBookById } from '../data/sourceSheetData';
 import './BookDetailsPage.css';
 
 const BookDetailsPage = () => {
@@ -14,10 +15,16 @@ const BookDetailsPage = () => {
             try {
                 setLoading(true);
                 const response = await apiClient.get(`/books/${bookId}`);
-                setBook(response.data);
+                setBook(response.data || findSourceBookById(bookId));
             } catch (err) {
                 console.error("Error fetching book details:", err);
-                setError("Could not find the requested book.");
+                const sourceBook = findSourceBookById(bookId);
+                if (sourceBook) {
+                    setBook(sourceBook);
+                    setError(null);
+                } else {
+                    setError("Could not find the requested book.");
+                }
             } finally {
                 setLoading(false);
             }

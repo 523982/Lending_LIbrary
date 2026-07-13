@@ -15,6 +15,12 @@ const Header = () => {
                 <nav>
                     <NavLink to="/browse">Browse Books</NavLink>
                     <NavLink to="/community">Community</NavLink>
+                    {userRole === 'admin' && (
+                        <>
+                            <NavLink to="/admin/books">Manage Books</NavLink>
+                            <NavLink to="/admin/add-community">Add Community</NavLink>
+                        </>
+                    )}
                 </nav>
                 <div className="auth-section">
                     {userRole === 'admin' ? (

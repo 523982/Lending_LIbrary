@@ -177,9 +177,11 @@ const BookActionsPage = () => {
             try {
                 // This endpoint should only search for books that are NOT available
                 const response = await apiClient.get(`/books/searchlent?q=${returnBookQuery}&status=unavailable`);
-                setReturnBookResults(response.data);
+                setReturnBookResults(Array.isArray(response.data) ? response.data : []);
             } catch (err) {
                 console.error("Error searching for lent books:", err);
+                setError("Failed to search for lent books. Please check the API.");
+                setReturnBookResults([]);
             } finally {
                 setLoadingReturnSearch(false);
             }
@@ -188,14 +190,19 @@ const BookActionsPage = () => {
     }, [returnBookQuery, currentAction]);
 
     const handleSelectReturnBook  = async (book) => {
+        setError(null);
         setReturnBookQuery(book.bookName);
         setReturnBookResults([]);
         try {
             // This new endpoint gets the active transaction for a specific book
             const response = await apiClient.get(`/transactions/book/${book.bookId}/active`);
-            setSelectedReturnTransaction(response.data);
+            const activeTransaction = Array.isArray(response.data) ? response.data[0] : response.data;
+            if (!activeTransaction) {
+                throw new Error("No active transaction found for this book.");
+            }
+            setSelectedReturnTransaction(activeTransaction);
             // Reset return details when a new book is selected
-            //setReturnDetails({ returnDate: new Date().toISOString().split('T')[0], isSwap: false });
+            setReturnDetails({ returnDate: new Date().toISOString().split('T')[0], isSwap: false });
         } catch (err) {
             console.error("Error fetching transaction details:", err);
             setError("Could not find active loan details for this book.");
@@ -205,6 +212,24 @@ const BookActionsPage = () => {
 
 
         const handleSelectBook = (book) => {
+            const statusName = String(
+                book.bookstatus?.statusDesc ||
+                book.bookstatus?.statusName ||
+                book.bookStatus?.statusDesc ||
+                book.bookStatus?.statusName ||
+                book.status ||
+                ''
+            ).toLowerCase();
+
+            if (currentAction === 'lend' && statusName && statusName !== 'available') {
+                setError(`"${book.bookName}" is currently unavailable for lending.`);
+                setSelectedBook(null);
+                setSearchQuery(book.bookName);
+                setSearchResults([]);
+                return;
+            }
+
+            setError(null);
             setSelectedBook(book);
             setSearchQuery(book.bookName);
             setSearchResults([]);
@@ -368,7 +393,7 @@ const BookActionsPage = () => {
                 // You can add partial payment logic here if needed
             };
             // This new endpoint will handle the return logic
-            await apiClient.put(`/transactions/return/${selectedReturnTransaction.transactionId}`, payload);
+            await apiClient.put(`/transactions/${selectedReturnTransaction.bookId}/return`, payload);
             setSuccess("Book returned successfully!");
 
             // Reset the state
@@ -609,7 +634,7 @@ const BookActionsPage = () => {
                                     {loadingReturnSearch && <div className="loader"></div>}
                                     {returnBookResults.length > 0 && (
                                         <ul className="search-results">
-                                            {returnBookResults.map(book => <li key={book.bookId} onClick={() => handleSelectLentBook(book)}>{book.bookName}</li>)}
+                                            {returnBookResults.map(book => <li key={book.bookId} onClick={() => handleSelectReturnBook(book)}>{book.bookName}</li>)}
                                         </ul>
                                     )}
                                 </div>
