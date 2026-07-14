@@ -163,6 +163,20 @@
     margin-top: 0.5rem;
 }
 
+.inline-link-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #007bff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+}
+
+.inline-link-button:hover {
+    text-decoration: underline;
+}
+
 .radio-group {
     display: flex;
     align-items: center;

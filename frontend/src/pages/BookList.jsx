@@ -4,6 +4,20 @@ import BookCard from '../pages/BookCard';
 import { sourceBooks } from '../data/sourceSheetData';
 import '../pages/BookList.css'; // CSS for the grid layout
 
+const isObsoleteBook = (book) => {
+    const statusId = book.bookstatus?.statusId || book.bookStatus?.statusId || book.statusId;
+    const statusName = String(
+        book.bookstatus?.statusDesc ||
+        book.bookstatus?.statusName ||
+        book.bookStatus?.statusDesc ||
+        book.bookStatus?.statusName ||
+        book.status ||
+        ''
+    ).toLowerCase();
+
+    return Number(statusId) === 6 || statusName === 'obsolete';
+};
+
 const BookList = () => {
     const [books, setBooks] = useState([]);
     const [error, setError] = useState(null);
@@ -16,8 +30,9 @@ const BookList = () => {
                 // Assuming you have a '/books' endpoint
                 const response = await apiClient.get('/books');
                 const apiBooks = Array.isArray(response.data) ? response.data : [];
+                const visibleBooks = apiBooks.filter(book => !isObsoleteBook(book));
                 if (apiBooks.length > 0) {
-                    setBooks(apiBooks);
+                    setBooks(visibleBooks);
                     setUsingSourceData(false);
                 } else {
                     setBooks(sourceBooks);

@@ -25,6 +25,7 @@ const BookActionsPage = () => {
         const [selectedBook, setSelectedBook] = useState(null);
         const [loadingSearch, setLoadingSearch] = useState(false);
         const [searchError, setSearchError] = useState(null);
+        const [returnToLendAfterAdd, setReturnToLendAfterAdd] = useState(false);
 
     
     const [error, setError] = useState(null);
@@ -98,6 +99,13 @@ const BookActionsPage = () => {
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
             }));
+        };
+
+        const handleAddBookFromLend = () => {
+            setError(null);
+            setSuccess(null);
+            setReturnToLendAfterAdd(true);
+            setCurrentAction('add');
         };
     
         // Debounced search effect for Modify/Delete tabs
@@ -271,7 +279,29 @@ const BookActionsPage = () => {
                 purchasePrice: parseFloat(bookData.purchasePrice) || 0,
                 lendingCost: parseFloat(bookData.lendingCost) || 0,
             };
-            await apiClient.post('/books', payload);
+            const response = await apiClient.post('/books', payload);
+            const newBook = response.data;
+
+            setBookData({
+                bookName: '',
+                author: '',
+                genre: '',
+                purchasePrice: '',
+                lendingCost: '',
+                coverImageUrl: '',
+            });
+
+            if (returnToLendAfterAdd) {
+                setSelectedBook(newBook);
+                setSearchQuery(newBook?.bookName || bookData.bookName);
+                setSearchResults([]);
+                setLendDetails({ isSwap: false, isPartiallyPaid: false, amountPaid: 0 });
+                setReturnToLendAfterAdd(false);
+                setCurrentAction('lend');
+                setSuccess(`Book "${newBook?.bookName || bookData.bookName}" added and selected for lending.`);
+                return;
+            }
+
             setSuccess('Book added successfully! Redirecting...');
             setTimeout(() => navigate('/browse'), 2000);
         } catch (err) {
@@ -422,6 +452,18 @@ const BookActionsPage = () => {
             {currentAction === 'add' && (
                 <>
                     <h1>Add a New Book</h1>
+                    {returnToLendAfterAdd && (
+                        <button
+                            type="button"
+                            className="add-new-link-inline inline-link-button"
+                            onClick={() => {
+                                setReturnToLendAfterAdd(false);
+                                setCurrentAction('lend');
+                            }}
+                        >
+                            Back to Lend Book
+                        </button>
+                    )}
                     <form onSubmit={handleSubmit} className="admin-form">
                         {/* ... Add Book form fields ... */}
                         <div className="form-group">
@@ -581,6 +623,7 @@ const BookActionsPage = () => {
                                         <ul className="search-results"><li className="no-results">No available books found</li></ul>
                                     )}
                                 </div>
+                                <button type="button" className="add-new-link-inline inline-link-button" onClick={handleAddBookFromLend}>Or Add New Book</button>
                             </div>
                             {selectedBook && (
                                 <div className="selection-display">
