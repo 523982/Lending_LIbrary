@@ -1,14 +1,14 @@
 package com.library.dto;
 
 import java.math.BigDecimal;
-
-import com.library.enums.BookStatusEnum;
+import java.time.LocalDate;
 
 public class BooksDTO {
     private Long bookId;
     private String bookName;
     private String author;
     private BigDecimal lendingCost;
+    private LocalDate purchaseDate;
     private BookStatusDTO bookstatus; // Use the DTO here
 
 	public Long getBookId() {
@@ -34,6 +34,14 @@ public class BooksDTO {
 	}
 	public void setLendingCost(BigDecimal bigDecimal) {
 		this.lendingCost = bigDecimal;
+	}
+
+	public LocalDate getPurchaseDate() {
+		return purchaseDate;
+	}
+
+	public void setPurchaseDate(LocalDate purchaseDate) {
+		this.purchaseDate = purchaseDate;
 	}
 
 	public BookStatusDTO getBookstatus() {

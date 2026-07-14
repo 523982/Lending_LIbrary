@@ -2,6 +2,7 @@ package com.library.model;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.hibernate.annotations.Cascade;
 
@@ -86,6 +87,14 @@ public class Books {
 		this.purchasePrice = purchasePrice;
 	}
 
+	public LocalDate getPurchaseDate() {
+		return purchaseDate;
+	}
+
+	public void setPurchaseDate(LocalDate purchaseDate) {
+		this.purchaseDate = purchaseDate;
+	}
+
 	@Id
     //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_id")
@@ -111,5 +120,8 @@ public class Books {
 
     @Column(name = "purchase_price")
     private BigDecimal purchasePrice;
+
+    @Column(name = "purchase_date")
+    private LocalDate purchaseDate;
 }
 
