@@ -23,6 +23,9 @@ public interface BooksRepository extends JpaRepository<Books, Long> {
 	
 	@Query(value = "SELECT * FROM INVENTORY WHERE status_id = 2 AND LOWER(book_name) LIKE LOWER(CONCAT('%', :query, '%'))", nativeQuery = true)
     List<Books> lentBooks(@Param("query") String query);	
+
+	@Query("SELECT b FROM Books b WHERE b.bookStatus IS NULL OR b.bookStatus.statusId <> :statusId")
+	List<Books> findByStatusIdNot(@Param("statusId") Long statusId);
 	
 	List<Books> findByBookNameContainingIgnoreCase(String query);
 }

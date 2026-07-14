@@ -35,7 +35,7 @@ public class BooksService {
 	    
 
 		public List<BooksDTO> getAllBooks() {
-			 return booksRepository.findAll()
+			 return booksRepository.findByStatusIdNot(6L)
                      .stream()
                      .map(this::convertToDto)
                      .collect(Collectors.toList());

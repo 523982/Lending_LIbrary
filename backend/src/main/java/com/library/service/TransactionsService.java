@@ -86,6 +86,7 @@ public class TransactionsService {
 		transaction.setTransactionId(generateNextTransactionId()); // Assuming String ID
 		transaction.setBooks(book);
 		transaction.setCustomers(customer);
+		transaction.setPickupDate(lendRequest.getPickupDate() != null ? lendRequest.getPickupDate() : LocalDate.now());
 		transaction.setTotalAmount(lendRequest.getTotalAmount());
 		transaction.setSwap(lendRequest.isSwap());
 		transaction.setPartiallyPaid(lendRequest.isPartiallyPaid());

@@ -3,11 +3,13 @@ package com.library.dto;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 public class LendRequestDTO {
     private Long bookId;
     private String customerId;
+    private LocalDate pickupDate;
     private BigDecimal totalAmount;
     private boolean isSwap;
     private boolean isPartiallyPaid;
@@ -23,6 +25,12 @@ public class LendRequestDTO {
 	}
 	public void setCustomerId(String customerId) {
 		this.customerId = customerId;
+	}
+	public LocalDate getPickupDate() {
+		return pickupDate;
+	}
+	public void setPickupDate(LocalDate pickupDate) {
+		this.pickupDate = pickupDate;
 	}
 	public BigDecimal getTotalAmount() {
 		return totalAmount;

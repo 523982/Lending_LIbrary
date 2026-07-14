@@ -50,7 +50,9 @@ public class Transactions {
 
     @PrePersist
     public void setDefaults() {
-        this.pickupDate = LocalDate.now();
+        if (this.pickupDate == null) {
+            this.pickupDate = LocalDate.now();
+        }
     }
     
     public String getTransactionId() {
