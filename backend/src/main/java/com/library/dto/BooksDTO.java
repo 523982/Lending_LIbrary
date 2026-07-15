@@ -7,6 +7,7 @@ public class BooksDTO {
     private Long bookId;
     private String bookName;
     private String author;
+    private String genre;
     private BigDecimal lendingCost;
     private LocalDate purchaseDate;
     private BookStatusDTO bookstatus; // Use the DTO here
@@ -28,6 +29,12 @@ public class BooksDTO {
 	}
 	public void setAuthor(String author) {
 		this.author = author;
+	}
+	public String getGenre() {
+		return genre;
+	}
+	public void setGenre(String genre) {
+		this.genre = genre;
 	}
 	public BigDecimal getLendingCost() {
 		return lendingCost;

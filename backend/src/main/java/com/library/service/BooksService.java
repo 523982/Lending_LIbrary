@@ -132,6 +132,7 @@ public class BooksService {
 	        dto.setBookId(book.getBookId());
 	        dto.setBookName(book.getBookName());
 	        dto.setAuthor(book.getAuthor());
+	        dto.setGenre(book.getGenre());
 	        dto.setLendingCost(book.getLendingCost());
 	        dto.setPurchaseDate(book.getPurchaseDate());
 
