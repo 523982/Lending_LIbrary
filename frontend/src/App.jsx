@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BookActionsPage from './pages/BookActions';
 import AddCustomerPage from './pages/AddCustomerPage';
 import AddCommunityPage from './pages/AddCommunityPage';
+import Reports from './pages/Reports';
 import './App.css';
 
 // A simple placeholder for the home page
@@ -32,6 +33,7 @@ function App() {
                         <Route path="/admin/books" element={<BookActionsPage />} />
               <Route path="/admin/add-customer" element={<AddCustomerPage />} />
               <Route path="/admin/add-community" element={<AddCommunityPage />} />
+              <Route path="/admin/reports" element={<Reports />} />
             </Route>
           </Routes>
         </main>

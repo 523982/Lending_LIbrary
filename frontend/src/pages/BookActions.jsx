@@ -5,6 +5,42 @@ import './AdminForms.css';
 import './BookActions.css'; // We'll create this for new styles
 
 
+const calculateReturnSummary = (transaction, returnDetails) => {
+    if (!transaction) {
+        return {
+            billedWeeks: 1,
+            totalCost: 0,
+            amountPaid: 0,
+            balanceDue: 0,
+        };
+    }
+
+    const pickupDate = new Date(transaction.pickupDate);
+    const returnDate = new Date(returnDetails.returnDate);
+    const dayMs = 1000 * 60 * 60 * 24;
+    const days = Math.ceil((returnDate - pickupDate) / dayMs);
+    const billedWeeks = Math.max(1, Math.ceil(days / 7));
+    const weeklyRate = Number(transaction.lendingCost) || 0;
+    const totalCost = (returnDetails.isSwap ? weeklyRate / 2 : weeklyRate) * billedWeeks;
+    const amountPaid = Number(transaction.amountPaid) || 0;
+    const balanceDue = Math.max(0, totalCost - amountPaid);
+
+    return {
+        billedWeeks,
+        totalCost,
+        amountPaid,
+        balanceDue,
+    };
+};
+
+const getTodayInputValue = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 
 //Adding, Modifying, Deleting & Lending Books
 const BookActionsPage = () => {
@@ -14,6 +50,7 @@ const BookActionsPage = () => {
         author: '',
         genre: '',
         purchasePrice: '',
+        purchaseDate: getTodayInputValue(),
         lendingCost: '',
         coverImageUrl: '',
     });
@@ -42,6 +79,7 @@ const BookActionsPage = () => {
     const [selectedLendCustomer, setSelectedLendCustomer] = useState(null);
     const [loadingLendData, setLoadingLendData] = useState(true);
     const [lendDetails, setLendDetails] = useState({
+        pickupDate: new Date().toISOString().split('T')[0],
         isSwap: false,
         isPartiallyPaid: false,
         amountPaid: 0,
@@ -244,7 +282,7 @@ const BookActionsPage = () => {
                         // When a book is selected for lending, set its cost as the total amount
             // and reset the payment details.
             if (currentAction === 'lend') {
-                setLendDetails({ isSwap: false, isPartiallyPaid: false, amountPaid: 0 });
+                setLendDetails({ pickupDate: new Date().toISOString().split('T')[0], isSwap: false, isPartiallyPaid: false, amountPaid: 0 });
             }
         };
 
@@ -265,6 +303,26 @@ const BookActionsPage = () => {
             setReturnCustomerResults([]);
         };
 
+        useEffect(() => {
+            if (location.state?.adminBookAction === 'lend' && location.state?.book) {
+                const bookForLend = location.state.book;
+
+                setCurrentAction('lend');
+                setError(null);
+                setSelectedBook(bookForLend);
+                setSearchQuery(bookForLend.bookName || '');
+                setSearchResults([]);
+                setLendDetails({ pickupDate: new Date().toISOString().split('T')[0], isSwap: false, isPartiallyPaid: false, amountPaid: 0 });
+                navigate(location.pathname, { replace: true, state: {} });
+            }
+
+            if (location.state?.adminBookAction === 'return' && location.state?.book) {
+                setCurrentAction('return');
+                handleSelectReturnBook(location.state.book);
+                navigate(location.pathname, { replace: true, state: {} });
+            }
+        }, [location.state]);
+
 
 
     const handleSubmit = async (e) => {
@@ -277,6 +335,7 @@ const BookActionsPage = () => {
             const payload = {
                 ...bookData,
                 purchasePrice: parseFloat(bookData.purchasePrice) || 0,
+                purchaseDate: bookData.purchaseDate || null,
                 lendingCost: parseFloat(bookData.lendingCost) || 0,
             };
             const response = await apiClient.post('/books', payload);
@@ -287,6 +346,7 @@ const BookActionsPage = () => {
                 author: '',
                 genre: '',
                 purchasePrice: '',
+                purchaseDate: getTodayInputValue(),
                 lendingCost: '',
                 coverImageUrl: '',
             });
@@ -295,7 +355,7 @@ const BookActionsPage = () => {
                 setSelectedBook(newBook);
                 setSearchQuery(newBook?.bookName || bookData.bookName);
                 setSearchResults([]);
-                setLendDetails({ isSwap: false, isPartiallyPaid: false, amountPaid: 0 });
+                setLendDetails({ pickupDate: new Date().toISOString().split('T')[0], isSwap: false, isPartiallyPaid: false, amountPaid: 0 });
                 setReturnToLendAfterAdd(false);
                 setCurrentAction('lend');
                 setSuccess(`Book "${newBook?.bookName || bookData.bookName}" added and selected for lending.`);
@@ -380,6 +440,7 @@ const BookActionsPage = () => {
                         const payload = {
                 bookId: selectedBook.bookId,
                 customerId: selectedLendCustomer.customerId,
+                pickupDate: lendDetails.pickupDate,
                 totalAmount: selectedBook.lendingCost,
                 swap: lendDetails.isSwap,
                 partiallyPaid: lendDetails.isPartiallyPaid,
@@ -392,7 +453,7 @@ const BookActionsPage = () => {
             setSuccess(`Successfully lent "${selectedBook.bookName}" to ${selectedLendCustomer.customerName}.`);
             handleClearSelection();
             setSelectedLendCustomer(null);
-            setLendDetails({ isSwap: false, isPartiallyPaid: false, amountPaid: 0 }); // Reset form
+            setLendDetails({ pickupDate: new Date().toISOString().split('T')[0], isSwap: false, isPartiallyPaid: false, amountPaid: 0 }); // Reset form
 
         } catch (err) {
             setError(err.response?.data?.message || "Failed to process transaction. Check API and payload.");
@@ -407,24 +468,17 @@ const BookActionsPage = () => {
         }
         setError(null);
         setSuccess(null);
-
-        // Calculate the final cost based on swap status
-        const weeks = Math.ceil((new Date(returnDetails.returnDate) - new Date(selectedReturnTransaction.pickupDate)) / (1000 * 60 * 60 * 24 * 7));
-        let finalCost = (selectedReturnTransaction.lendingCost || 0) * Math.max(1, weeks);
-        if (returnDetails.isSwap) {
-            finalCost /= 2;
-        }
+        const summary = calculateReturnSummary(selectedReturnTransaction, returnDetails);
 
         try {
             const payload = {
                 returnDate: returnDetails.returnDate,
-                finalCost: finalCost,
-                isSwap: returnDetails.isSwap,
+                swap: returnDetails.isSwap,
                 // You can add partial payment logic here if needed
             };
             // This new endpoint will handle the return logic
             await apiClient.put(`/transactions/${selectedReturnTransaction.bookId}/return`, payload);
-            setSuccess("Book returned successfully!");
+            setSuccess(`Book returned successfully! To be paid: Rs. ${summary.balanceDue.toFixed(2)}.`);
 
             // Reset the state
             setReturnBookQuery('');
@@ -479,12 +533,16 @@ const BookActionsPage = () => {
                             <input type="text" id="genre" name="genre" value={bookData.genre} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
-                            <label htmlFor="lendingCost">Lending Cost (Rs.)</label>
+                            <label htmlFor="lendingCost">Lending Cost (Rs. per week)</label>
                             <input type="number" id="lendingCost" name="lendingCost" value={bookData.lendingCost} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
                             <label htmlFor="purchasePrice">Purchase Cost (Rs.)</label>
                             <input type="number" id="purchasePrice" name="purchasePrice" value={bookData.purchasePrice} onChange={handleChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="purchaseDate">Purchase Date</label>
+                            <input type="date" id="purchaseDate" name="purchaseDate" value={bookData.purchaseDate} onChange={handleChange} required />
                         </div>
                         <button type="submit" className="submit-button">Add Book</button>
                     </form>
@@ -539,7 +597,7 @@ const BookActionsPage = () => {
                                 <input type="text" id="genre" name="genre" value={selectedBook.genre} onChange={handleModifyChange} required />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="lendingCost">Lending Cost (Rs.)</label>
+                                <label htmlFor="lendingCost">Lending Cost (Rs. per week)</label>
                                 <input type="number" id="lendingCost" name="lendingCost" value={selectedBook.lendingCost} onChange={handleModifyChange} required />
                             </div>
                             <div className="form-group">
@@ -636,7 +694,11 @@ const BookActionsPage = () => {
                          <fieldset>
                             <legend>3. Transaction Details</legend>
                             <div className="form-group">
-                                <label>Total Amount: Rs. {selectedBook ? selectedBook.lendingCost : '0.00'}</label>
+                                <label htmlFor="pickupDate">Lend Date</label>
+                                <input type="date" id="pickupDate" name="pickupDate" value={lendDetails.pickupDate} onChange={handleLendDetailsChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Lending Amount per week: Rs. {selectedBook ? selectedBook.lendingCost : '0.00'}</label>
                             </div>
                             <div className="form-group form-group-inline">
                                 <input type="checkbox" id="isSwap" name="isSwap" checked={lendDetails.isSwap} onChange={handleLendDetailsChange} />
@@ -649,7 +711,7 @@ const BookActionsPage = () => {
                             {lendDetails.isPartiallyPaid && (
                                 <div className="form-group">
                                     <label htmlFor="amountPaid">Amount Paid (Rs.)</label>
-                                    <input type="number" id="amountPaid" name="amountPaid" value={lendDetails.amountPaid} onChange={handleLendDetailsChange} />
+                                    <input type="number" id="amountPaid" name="amountPaid" value={lendDetails.amountPaid} min="0" onChange={handleLendDetailsChange} required />
                                 </div>
                             )}
                         </fieldset>
@@ -702,24 +764,29 @@ const BookActionsPage = () => {
                                     <legend>3. Return Details</legend>
                                     <div className="form-group">
                                         <label htmlFor="returnDate">Return Date</label>
-                                        <input type="date" id="returnDate" name="returnDate" value={returnDetails.returnDate} onChange={(e) => setReturnDetails(p => ({ ...p, returnDate: e.target.value }))} />
+                                        <input type="date" id="returnDate" name="returnDate" value={returnDetails.returnDate} min={selectedReturnTransaction.pickupDate} onChange={(e) => setReturnDetails(p => ({ ...p, returnDate: e.target.value }))} />
                                     </div>
                                     <div className="form-group form-group-inline">
                                         <input type="checkbox" id="returnIsSwap" name="isSwap" checked={returnDetails.isSwap} onChange={(e) => setReturnDetails(p => ({ ...p, isSwap: e.target.checked }))} />
                                         <label htmlFor="returnIsSwap">Book was swapped?</label>
                                     </div>
                                     <div className="form-group">
-                                        <label>Calculated Cost:</label>
-                                        <p className="calculated-cost">
-                                            Rs. {
-                                                (() => {
-                                                    const weeks = Math.ceil((new Date(returnDetails.returnDate) - new Date(selectedReturnTransaction.pickupDate)) / (1000 * 60 * 60 * 24 * 7));
-                                                    let cost = (selectedReturnTransaction.lendingCost || 0) * Math.max(1, weeks);
-                                                    if (returnDetails.isSwap) cost /= 2;
-                                                    return cost.toFixed(2);
-                                                })()
-                                            }
-                                        </p>
+                                        {(() => {
+                                            const summary = calculateReturnSummary(selectedReturnTransaction, returnDetails);
+
+                                            return (
+                                                <>
+                                                    <label>Duration:</label>
+                                                    <p>{summary.billedWeeks} week{summary.billedWeeks === 1 ? '' : 's'}</p>
+                                                    <label>Total Lending Amount:</label>
+                                                    <p>Rs. {summary.totalCost.toFixed(2)}</p>
+                                                    <label>Amount Paid:</label>
+                                                    <p>Rs. {summary.amountPaid.toFixed(2)}</p>
+                                                    <label>To Be Paid:</label>
+                                                    <p className="calculated-cost">Rs. {summary.balanceDue.toFixed(2)}</p>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </fieldset>
                                 <button type="submit" className="submit-button">Process Return</button>

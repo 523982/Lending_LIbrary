@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom'; // We'll need react-router-dom for this
+import { useParams, Link, useNavigate } from 'react-router-dom'; // We'll need react-router-dom for this
 import apiClient from '../services/api';
-import { findSourceBookById } from '../data/sourceSheetData';
+import { useAuth } from '../context/AuthContext';
 import './BookDetailsPage.css';
 
 const BookDetailsPage = () => {
     const { bookId } = useParams(); // Gets the 'bookId' from the URL (e.g., /books/123)
+    const navigate = useNavigate();
+    const { userRole } = useAuth();
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -15,16 +17,17 @@ const BookDetailsPage = () => {
             try {
                 setLoading(true);
                 const response = await apiClient.get(`/books/${bookId}`);
-                setBook(response.data || findSourceBookById(bookId));
-            } catch (err) {
-                console.error("Error fetching book details:", err);
-                const sourceBook = findSourceBookById(bookId);
-                if (sourceBook) {
-                    setBook(sourceBook);
+                if (response.data) {
+                    setBook(response.data);
                     setError(null);
                 } else {
+                    setBook(null);
                     setError("Could not find the requested book.");
                 }
+            } catch (err) {
+                console.error("Error fetching book details:", err);
+                setBook(null);
+                setError("Failed to load book details from the inventory API.");
             } finally {
                 setLoading(false);
             }
@@ -38,8 +41,37 @@ const BookDetailsPage = () => {
     if (!book) return <div>Book not found.</div>;
 
     const coverImage = book.coverImageUrl || 'https://via.placeholder.com/300x400.png?text=No+Cover';
-    const statusDesc = book.bookStatus?.statusDesc || book.bookStatus; // Safely access nested property
-    const isAvailable = typeof statusDesc === 'string' && statusDesc.toLowerCase() === 'available';
+    const statusDesc = String(
+        book.bookstatus?.statusDesc ||
+        book.bookstatus?.statusName ||
+        book.bookStatus?.statusDesc ||
+        book.bookStatus?.statusName ||
+        book.bookStatus ||
+        book.status ||
+        ''
+    ).toLowerCase();
+    const isAvailable = statusDesc === 'available';
+    const isOnLoan = statusDesc === 'unavailable' || statusDesc === 'on loan';
+    const isAdmin = userRole === 'admin';
+    const handleAdminBookAction = () => {
+        if (isAvailable) {
+            navigate('/admin/books', {
+                state: {
+                    adminBookAction: 'lend',
+                    book,
+                },
+            });
+            return;
+        }
+
+        navigate('/admin/books', {
+            state: {
+                adminBookAction: 'return',
+                book,
+            },
+        });
+    };
+
  return (
         <div className="book-details-container">
             <Link to="/browse" className="back-link">&larr; Back to Browse</Link>
@@ -52,9 +84,11 @@ const BookDetailsPage = () => {
                     <span className={`book-details-status ${isAvailable ? 'available' : 'unavailable'}`}>
                         {isAvailable ? 'Available' : 'On Loan'}
                     </span>
-                    <button className="borrow-button" disabled={!isAvailable}>
-                        {isAvailable ? 'Borrow This Book' : 'Currently Unavailable'}
-                    </button>
+                    {isAdmin && (isAvailable || isOnLoan) && (
+                        <button className={`borrow-button ${isOnLoan ? 'return-button' : ''}`} onClick={handleAdminBookAction}>
+                            {isAvailable ? 'Borrow This Book' : 'Return Book'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

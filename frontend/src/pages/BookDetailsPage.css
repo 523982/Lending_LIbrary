@@ -87,6 +87,14 @@
     background-color: #0b5ed7;
 }
 
+.borrow-button.return-button {
+    background-color: #fd7e14;
+}
+
+.borrow-button.return-button:hover:not(:disabled) {
+    background-color: #dc6502;
+}
+
 .borrow-button:disabled {
     background-color: #6c757d;
     cursor: not-allowed;

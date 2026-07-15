@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../services/api';
 import BookCard from '../pages/BookCard';
-import { sourceBooks } from '../data/sourceSheetData';
 import '../pages/BookList.css'; // CSS for the grid layout
 
 const isObsoleteBook = (book) => {
@@ -22,7 +21,6 @@ const BookList = () => {
     const [books, setBooks] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [usingSourceData, setUsingSourceData] = useState(false);
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -31,17 +29,12 @@ const BookList = () => {
                 const response = await apiClient.get('/books');
                 const apiBooks = Array.isArray(response.data) ? response.data : [];
                 const visibleBooks = apiBooks.filter(book => !isObsoleteBook(book));
-                if (apiBooks.length > 0) {
-                    setBooks(visibleBooks);
-                    setUsingSourceData(false);
-                } else {
-                    setBooks(sourceBooks);
-                    setUsingSourceData(true);
-                }
+                setBooks(visibleBooks);
+                setError(apiBooks.length === 0 ? 'No books found in inventory.' : null);
             } catch (err) {
                 console.error("Error fetching books:", err);
-                setBooks(sourceBooks);
-                setUsingSourceData(true);
+                setBooks([]);
+                setError("Failed to load books from the inventory API.");
             } finally {
                 setLoading(false);
             }
@@ -55,9 +48,6 @@ const BookList = () => {
             <h2>Our Collection</h2>
             {loading && <div>Loading books...</div>}
             {error && <div style={{ color: 'red' }}>{error}</div>}
-            {!loading && usingSourceData && (
-                <p className="source-data-note">Showing temporary data from Source Sheet.xlsx.</p>
-            )}
             <div className="book-list">
                 {!loading && !error && books.map(book => (
                     <BookCard key={book.bookId} book={book} />
