@@ -8,6 +8,7 @@ import HomePage from './components/HomePage';
 import Community from './components/Community'; // Assuming Community is in components
 import ProtectedRoute from './components/ProtectedRoute';
 import BookActionsPage from './pages/BookActions';
+import CustomerActionsPage from './pages/CustomerActions';
 import AddCustomerPage from './pages/AddCustomerPage';
 import AddCommunityPage from './pages/AddCommunityPage';
 import Reports from './pages/Reports';
@@ -31,6 +32,7 @@ function App() {
                         {/* Protected Admin Routes */}
                         <Route element={<ProtectedRoute />}>
                         <Route path="/admin/books" element={<BookActionsPage />} />
+              <Route path="/admin/customers" element={<CustomerActionsPage />} />
               <Route path="/admin/add-customer" element={<AddCustomerPage />} />
               <Route path="/admin/add-community" element={<AddCommunityPage />} />
               <Route path="/admin/reports" element={<Reports />} />
